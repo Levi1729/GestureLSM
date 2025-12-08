@@ -1,0 +1,6 @@
+/Users/tharunsaireddy/miniforge3/envs/gesturelsm/lib/python3.12/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Device set to use cpu
+Using `chunk_length_s` is very experimental with seq2seq models. The results will not necessarily be entirely accurate and will have caveats. More information: https://github.com/huggingface/transformers/pull/20104. Ignore this warning with pipeline(..., ignore_warning=True). To use Whisper for long-form transcription, use rather the model's `generate` method directly as the model relies on it's own chunking mechanism (cf. Whisper original paper, section 3.8. Long-form Transcription).
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 7860): [errno 48] address already in use
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 7861): [errno 48] address already in use
