@@ -1,37 +1,71 @@
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/gesturelsm-latent-shortcut-based-co-speech/gesture-generation-on-beat2)](https://paperswithcode.com/sota/gesture-generation-on-beat2?p=gesturelsm-latent-shortcut-based-co-speech) <a href="https://arxiv.org/abs/2501.18898"><img src="https://img.shields.io/badge/arxiv-gray?logo=arxiv&amp"></a>
 
+## GestureLSM: Latent Shortcut based Co-Speech Gesture Generation with Spatial-Temporal Modeling  
+**ICCV 2025**
 
+GestureLSM is a co-speech gesture generation framework that leverages diffusion models, latent shortcut modeling, and MeanFlow with spatial-temporal reasoning. This repository contains everything needed for training, testing, and running demos, as well as pretrained models and configuration files.
 
-# GestureLSM: Latent Shortcut based Co-Speech Gesture Generation with Spatial-Temporal Modeling [ICCV 2025]
+---
 
+## 1. Project Status & Highlights
 
-# 📝 Release Plans
+### 1.1 Release Checklist
 
-- [x] Inference Code
-- [x] Pretrained Models
-- [x] A web demo
-- [x] Training Code
-- [x] Clean Code to make it look nicer
+- [x] Inference code
+- [x] Pretrained models
+- [x] Web-based demo
+- [x] Training scripts
+- [x] Refactored, cleaner codebase
 - [x] Support for [MeanFlow](https://arxiv.org/abs/2505.13447)
 - [x] Unified training and testing pipeline
-- [ ] MeanFlow Training Code (Coming Soon)
-- [ ] Merge with [Intentional-Gesture](https://github.com/andypinxinliu/Intentional-Gesture)
+- [ ] MeanFlow training code (planned, coming soon)
+- [ ] Integration with [Intentional-Gesture](https://github.com/andypinxinliu/Intentional-Gesture)
 
-## 🔄 Code Updates
+### 1.2 Recent Code Updates
 
-**Latest Update**: The codebase has been cleaned and restructured. For legacy or historical information, please check out the `old` branch.
+- The repository has been **cleaned and reorganized**; older versions are preserved in the `old` branch for historical reference.
+- **New capabilities**:
+  - MeanFlow model support
+  - A single `train.py` entry point that now handles both training and evaluation
+  - New configuration files in `configs_new/`
+  - Updated checkpoints with improved performance
 
-**New Features**:
-- Added MeanFlow model support
-- Unified training and testing pipeline using `train.py`
-- New configuration files in `configs_new/` directory
-- Updated checkpoint files with improved performance
+---
 
-# ⚒️ Installation
+## 2. Quick Start
 
-## Build Environtment
+### 2.1 Demo / Inference Without Dataset
 
+Run a web-based demo (no dataset needed):
+
+```bash
+# Run the web demo with the Shortcut model
+python demo.py -c configs/shortcut_rvqvae_128_hf.yaml
 ```
+
+### 2.2 Testing with Your Own Audio/Text
+
+```bash
+# Test with your own audio and text (requires pretrained models)
+python train.py --config configs_new/shortcut_rvqvae_128.yaml --ckpt ckpt/shortcut_reflow.bin --mode test
+```
+
+The demo provides:
+
+- A browser-based interface
+- Near real-time gesture generation
+- Support for custom audio and text input
+- Visualization of the generated gestures
+
+---
+
+## 3. Installation & Environment
+
+### 3.1 Environment Setup
+
+Use the following commands to create and configure the environment:
+
+```bash
 conda create -n gesturelsm python=3.12
 conda activate gesturelsm
 conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=11.8 -c pytorch -c nvidia
@@ -39,171 +73,204 @@ pip install -r requirements.txt
 bash demo/install_mfa.sh
 ```
 
-## 📁 Code Structure
+---
 
-Understanding the codebase structure will help you navigate and customize the project effectively.
+## 4. Repository Structure
 
-```
+Understanding the layout will help you customize and extend the project more easily.
+
+```text
 GestureLSM/
-├── 📁 configs_new/              # New unified configuration files
+├── configs_new/                      # New, unified configuration files
 │   ├── diffusion_rvqvae_128.yaml    # Diffusion model config
 │   ├── shortcut_rvqvae_128.yaml     # Shortcut model config
 │   └── meanflow_rvqvae_128.yaml     # MeanFlow model config
-├── 📁 configs/                  # Legacy configuration files (deprecated)
-├── 📁 ckpt/                     # Pretrained model checkpoints
+├── configs/                          # Legacy configuration files (deprecated)
+├── ckpt/                             # Pretrained model checkpoints
 │   ├── new_540_diffusion.bin        # Diffusion model weights
 │   ├── shortcut_reflow.bin          # Shortcut model weights
 │   ├── meanflow.pth                 # MeanFlow model weights
 │   └── net_300000_*.pth            # RVQ-VAE model weights
-├── 📁 models/                   # Model implementations
+├── models/                           # Model implementations
 │   ├── Diffusion.py                 # Diffusion model
 │   ├── LSM.py                       # Latent Shortcut Model
 │   ├── MeanFlow.py                  # MeanFlow model
-│   ├── 📁 layers/                   # Neural network layers
-│   ├── 📁 vq/                       # Vector quantization modules
-│   └── 📁 utils/                    # Model utilities
-├── 📁 dataloaders/              # Data loading and preprocessing
+│   ├── layers/                      # Neural network layers
+│   ├── vq/                          # Vector quantization modules
+│   └── utils/                       # Model utilities
+├── dataloaders/                      # Data loading and preprocessing
 │   ├── beat_sep_lower.py            # Main dataset loader
-│   ├── 📁 pymo/                     # Motion processing library
-│   └── 📁 utils/                    # Data utilities
-├── 📁 trainer/                  # Training framework
+│   ├── pymo/                        # Motion processing library
+│   └── utils/                       # Data utilities
+├── trainer/                          # Training framework
 │   ├── base_trainer.py              # Base trainer class
 │   └── generative_trainer.py        # Generative model trainer
-├── 📁 utils/                    # General utilities
+├── utils/                            # General utilities
 │   ├── config.py                    # Configuration management
 │   ├── metric.py                    # Evaluation metrics
 │   └── rotation_conversions.py      # Rotation utilities
-├── 📁 demo/                     # Demo and visualization
+├── demo/                             # Demo and visualization
 │   ├── examples/                    # Sample audio files
 │   └── install_mfa.sh               # MFA installation script
-├── 📁 datasets/                 # Dataset storage
+├── datasets/                         # Dataset storage
 │   ├── BEAT_SMPL/                   # Original BEAT dataset
 │   ├── beat_cache/                  # Preprocessed cache
 │   └── hub/                         # SMPL models and pretrained weights
-├── 📁 outputs/                  # Training outputs and logs
+├── outputs/                          # Training outputs and logs
 │   └── weights/                     # Saved model weights
-├── train.py                     # Unified training/testing script
-├── demo.py                      # Web demo script
-├── rvq_beatx_train.py          # RVQ-VAE training script
-└── requirements.txt             # Python dependencies
+├── train.py                         # Unified training/testing script
+├── demo.py                          # Web demo script
+├── rvq_beatx_train.py               # RVQ-VAE training script
+└── requirements.txt                 # Python dependencies
 ```
 
-### 🔧 Key Components
+---
 
-#### **Model Architecture**
-- **`models/Diffusion.py`**: Denoising diffusion model for high-quality generation
-- **`models/LSM.py`**: Latent Shortcut Model for fast inference
-- **`models/MeanFlow.py`**: Flow-based model for single-step generation
-- **`models/vq/`**: Vector quantization modules for latent space compression
+## 5. Core Components
 
-#### **Configuration System**
-- **`configs_new/`**: New unified configuration files for all models
-- **`configs/`**: Legacy configuration files (deprecated)
-- Each config file contains model parameters, training settings, and data paths
+### 5.1 Model Architecture
 
-#### **Data Pipeline**
-- **`dataloaders/beat_sep_lower.py`**: Main dataset loader for BEAT dataset
-- **`dataloaders/pymo/`**: Motion processing library for gesture data
-- **`datasets/beat_cache/`**: Preprocessed data cache for faster loading
+- **`models/Diffusion.py`** – Denoising diffusion model for high-quality gesture generation  
+- **`models/LSM.py`** – Latent Shortcut Model for efficient, fast inference  
+- **`models/MeanFlow.py`** – Flow-based, single-step MeanFlow model  
+- **`models/vq/`** – Vector quantization modules for latent-space compression  
 
-#### **Training Framework**
-- **`train.py`**: Unified script for training and testing all models
-- **`trainer/`**: Training framework with base and generative trainers
-- **`optimizers/`**: Optimizer and scheduler implementations
+### 5.2 Configuration System
 
-#### **Utilities**
-- **`utils/config.py`**: Configuration management and validation
-- **`utils/metric.py`**: Evaluation metrics (FGD, etc.)
-- **`utils/rotation_conversions.py`**: 3D rotation utilities
+- **`configs_new/`** – Modern, unified configurations for all models  
+- **`configs/`** – Older configuration files (kept for backward compatibility)  
+- Each YAML config specifies model hyperparameters, training settings, and data paths.
 
-### 🚀 Getting Started with the Code
+### 5.3 Data Pipeline
 
-1. **For Training**: Use `train.py` with configs from `configs_new/`
-2. **For Inference**: Use `demo.py` for web interface or `train.py --mode test`
-3. **For Customization**: Modify config files in `configs_new/` directory
-4. **For New Models**: Add model implementation in `models/` directory
+- **`dataloaders/beat_sep_lower.py`** – Primary loader for the BEAT dataset  
+- **`dataloaders/pymo/`** – Motion processing utilities for gesture data  
+- **`datasets/beat_cache/`** – Preprocessed cache for faster data loading  
 
-## Results
+### 5.4 Training Framework
 
-![Beat Results](beat-new.png)
+- **`train.py`** – Single script used to train and test all models  
+- **`trainer/`** – Implements the base and generative trainer abstractions  
+- **`optimizers/`** – Optimizer and scheduler definitions used by the trainer  
 
-This table shows the results of 1-speaker and all-speaker comparisons. RAG-Gesture refers to [**Retrieving Semantics from the Deep: an RAG Solution for Gesture Synthesis**](https://arxiv.org/abs/2412.06786), accepted by CVPR 2025. The stats for 1-speaker is based on speaker-id of 2, 'scott' in order to be consistent with the previous SOTA methods. I directly copied the stats from the RAG-Gesture repo, which is different from the stats in the current paper. 
+### 5.5 Utility Modules
 
-## Important Notes
+- **`utils/config.py`** – Configuration parsing, management, and validation  
+- **`utils/metric.py`** – Evaluation metrics (including FGD and related measures)  
+- **`utils/rotation_conversions.py`** – 3D rotation conversion utilities  
 
-### Model Performance
-- The statistics reported in the paper is based on 1-speaker with speaker-id of 2, 'scott' in order to be consistent with the previous SOTA methods.
-- The pretrained models are trained on 1-speaker. (RVQ-VAEs, Diffusion, Shortcut, MeanFlow)
-- If you want to use all-speaker, please modify the config files to include all speaker ids.
-- April 16, 2025: updated the pretrained model to include all speakers. (RVQ-VAEs, Shortcut)
-- No hyperparameter tuning was done for all-speaker - same settings as 1-speaker are used.
+---
 
-### Model Design Choices
-- No speaker embedding is included to make the model capable of generating gestures for novel speakers.
-- No gesture type information is used in the current version. This is intentional as gesture types are typically unknown for novel speakers and settings, making this approach more realistic for real-world applications.
-- If you want to see better FGD scores, you can try adding gesture type information.
+## 6. Models & Checkpoints
 
-### Code Structure
-- **Current Version**: Clean, unified codebase with MeanFlow support
-- **Legacy Code**: Available in the `old` branch for historical reference
-- **Accepted to ICCV 2025** - Thanks to all co-authors!
+### 6.1 Download Pretrained Models
 
-
-
-
-
-## Download Models
-
-### Pretrained Models (Updated)
-```
+```bash
 # Option 1: From Google Drive
 # Download the pretrained models (Diffusion + Shortcut + MeanFlow + RVQ-VAEs)
 gdown https://drive.google.com/drive/folders/1OfYWWJbaXal6q7LttQlYKWAy0KTwkPRw?usp=drive_link -O ./ckpt --folder
 
-# Option 2: From Huggingface Hub
+# Option 2: From Hugging Face Hub
 huggingface-cli download https://huggingface.co/pliu23/GestureLSM --local-dir ./ckpt
 
 # Download the SMPL model
 gdown https://drive.google.com/drive/folders/1MCks7CMNBtAzU2XihYezNmiGT_6pWex8?usp=drive_link -O ./datasets/hub --folder
 ```
 
-### Available Checkpoints
-- **Diffusion Model**: `ckpt/new_540_diffusion.bin`
-- **Shortcut Model**: `ckpt/shortcut_reflow.bin` 
-- **MeanFlow Model**: `ckpt/meanflow.pth`
-- **RVQ-VAE Models**: `ckpt/net_300000_upper.pth`, `ckpt/net_300000_hands.pth`, `ckpt/net_300000_lower.pth`
+**Available Checkpoints**
 
-## Download Dataset
-> For evaluation and training, not necessary for running a web demo or inference.
+- **Diffusion Model**: `ckpt/new_540_diffusion.bin`  
+- **Shortcut Model**: `ckpt/shortcut_reflow.bin`  
+- **MeanFlow Model**: `ckpt/meanflow.pth`  
+- **RVQ-VAE Models**:  
+  - `ckpt/net_300000_upper.pth`  
+  - `ckpt/net_300000_hands.pth`  
+  - `ckpt/net_300000_lower.pth`
 
-### Download BEAT2 Dataset from Hugging Face
-The original dataset download method is no longer available. Please use the Hugging Face dataset:
+---
+
+## 7. Dataset
+
+> Required for **training** and **evaluation**.  
+> Not required for running the web demo or simple inference.
+
+### 7.1 BEAT2 Dataset from Hugging Face
+
+The original download script is no longer functional. Please use the Hugging Face version:
 
 ```bash
 # Download BEAT2 dataset from Hugging Face
 huggingface-cli download H-Liu1997/BEAT2 --local-dir ./datasets/BEAT2
 ```
 
-**Dataset Information**:
-- **Source**: [H-Liu1997/BEAT2 on Hugging Face](https://huggingface.co/datasets/H-Liu1997/BEAT2)
-- **Size**: ~4.1K samples
-- **Format**: CSV with train/test splits
-- **License**: Apache 2.0
+**Dataset Information**
 
-### Legacy Download (Deprecated)
-> The original download method is no longer working
+- **Source**: [H-Liu1997/BEAT2 on Hugging Face](https://huggingface.co/datasets/H-Liu1997/BEAT2)  
+- **Size**: ~4.1K samples  
+- **Format**: CSV with train/test splits  
+- **License**: Apache 2.0  
+
+### 7.2 Legacy Download (Deprecated)
+
 ```bash
 # This command is deprecated and no longer works
 # bash preprocess/bash_raw_cospeech_download.sh
 ```
 
-## Testing/Evaluation
+---
 
-> **Note**: Requires dataset download for evaluation. For inference only, see the Demo section below.
+## 8. Training
 
-### Unified Testing Pipeline
+> Dataset download is required before training.
 
-The codebase now uses a unified `train.py` script for both training and testing. Use the `--mode test` flag for evaluation:
+### 8.1 Unified Training Pipeline
+
+Training is handled through a unified `train.py` script and the configs in `configs_new/`:
+
+```bash
+# Train Diffusion Model
+python train.py --config configs_new/diffusion_rvqvae_128.yaml
+
+# Train Shortcut Model
+python train.py --config configs_new/shortcut_rvqvae_128.yaml
+
+# Train MeanFlow Model
+python train.py --config configs_new/meanflow_rvqvae_128.yaml
+```
+
+**Training Configuration Notes**
+
+- **Config Directory**: Use `configs_new/` for up-to-date configs  
+- **Output Directory**: Models are saved to `./outputs/weights/`  
+- **Logging**: Supports Weights & Biases (configure in YAML files)  
+- **GPU Usage**: Set devices and related options in the config files  
+
+### 8.2 Legacy Training (Deprecated)
+
+```bash
+# Old training commands (deprecated)
+python train.py -c configs/shortcut_rvqvae_128.yaml
+python train.py -c configs/diffuser_rvqvae_128.yaml
+```
+
+### 8.3 Training RVQ-VAEs (1-Speaker)
+
+> Requires the dataset.
+
+```bash
+bash train_rvq.sh
+```
+
+---
+
+## 9. Testing & Evaluation
+
+> **Note**: The dataset is required for evaluation.  
+> For inference-only use cases, see the Quick Start section.
+
+### 9.1 Unified Testing Pipeline
+
+Use the unified `train.py` script with `--mode test`:
 
 ```bash
 # Test Diffusion Model (20 steps)
@@ -216,32 +283,8 @@ python train.py --config configs_new/shortcut_rvqvae_128.yaml --ckpt ckpt/shortc
 python train.py --config configs_new/meanflow_rvqvae_128.yaml --ckpt ckpt/meanflow.pth --mode test
 ```
 
-### Model Comparison
+### 9.2 Legacy Testing (Deprecated)
 
-| Model | Steps | Description | Key Features | Use Case |
-|-------|-------|-------------|--------------|----------|
-| **Diffusion** | 20 | Denoising diffusion model | High quality, slower inference | High-quality generation |
-| **Shortcut** | 2-4 | Latent shortcut with reflow | Fast inference, good quality | **Recommended for most users** |
-| **MeanFlow** | 1 | Flow-based generation | Fastest inference, single step | Real-time applications |
-
-### Performance Comparison
-
-| Model | Steps | FGD Score ↓ | Beat Constancy ↑ | L1Div Score ↓ | Inference Speed |
-|-------|-------|-------------|------------------|---------------|-----------------|
-| **MeanFlow** | 1 | **0.4031** | **0.7489** | 12.4631 | **Fastest** |
-| **Diffusion** | 20 | 0.4100 | 0.7384 | 12.5752 | Slowest |
-| **Shortcut** | 20 | 0.4040 | 0.7144 | 13.4874 | Fast |
-| **Shortcut-ReFlow** | 2 | 0.4104 | 0.7182 | **13.678** | Fast |
-
-**Legend**: 
-- **FGD Score** (↓): Lower is better - measures gesture quality
-- **Beat Constancy** (↑): Higher is better - measures audio-gesture synchronization  
-- **L1Div Score** (↑): Higher is better - measures diversity of generated gestures
-
-**Recommendation**: **MeanFlow** is the clear winner, offering the best FGD and L1Div scores with the fastest inference speed.
-
-### Legacy Testing (Deprecated)
-> For reference only - use the unified pipeline above instead
 ```bash
 # Old testing commands (deprecated)
 python test.py -c configs/shortcut_rvqvae_128.yaml
@@ -249,84 +292,96 @@ python test.py -c configs/shortcut_reflow_test.yaml
 python test.py -c configs/diffuser_rvqvae_128.yaml
 ```
 
-## Train RVQ-VAEs (1-speaker)
-> Require download dataset 
-```
-bash train_rvq.sh
-```
+### 9.3 Model Comparison
 
-## Training
+| Model       | Steps | Description               | Key Features                     | Use Case                      |
+|------------|-------|---------------------------|----------------------------------|-------------------------------|
+| **Diffusion** | 20    | Denoising diffusion model | High quality, slower inference   | High-quality generation       |
+| **Shortcut**  | 2–4   | Latent shortcut + reflow  | Fast inference, good quality     | **Recommended for most users** |
+| **MeanFlow**  | 1     | Flow-based generation     | Fastest, single-step inference   | Real-time applications        |
 
-> **Note**: Requires dataset download for training.
+### 9.4 Performance Comparison
 
-### Unified Training Pipeline
+| Model             | Steps | FGD Score ↓ | Beat Constancy ↑ | L1Div Score ↓ | Inference Speed |
+|------------------|-------|-------------|------------------|---------------|-----------------|
+| **MeanFlow**     | 1     | **0.4031**  | **0.7489**       | 12.4631       | **Fastest**     |
+| **Diffusion**    | 20    | 0.4100      | 0.7384           | 12.5752       | Slowest         |
+| **Shortcut**     | 20    | 0.4040      | 0.7144           | 13.4874       | Fast            |
+| **Shortcut-ReFlow** | 2  | 0.4104      | 0.7182           | **13.678**    | Fast            |
 
-The codebase now uses a unified `train.py` script for training all models. Use the new configuration files in `configs_new/`:
+**Legend**
+
+- **FGD Score (↓)**: Lower → better gesture quality  
+- **Beat Constancy (↑)**: Higher → better audio–gesture synchronization  
+- **L1Div Score (↑)**: Higher → more gesture diversity  
+
+**Recommendation**: MeanFlow typically offers the best overall trade-off, combining strong FGD and L1Div scores with the fastest inference.
+
+---
+
+## 10. Experimental Results & Notes
+
+![Beat Results](beat-new.png)
+
+The results table compares **1-speaker** and **all-speaker** setups. “RAG-Gesture” refers to [**Retrieving Semantics from the Deep: an RAG Solution for Gesture Synthesis**](https://arxiv.org/abs/2412.06786), accepted to CVPR 2025.  
+
+- 1-speaker scores are reported for speaker ID 2 (“scott”) to stay aligned with prior SOTA methods.  
+- The 1-speaker statistics are directly taken from the RAG-Gesture repository and differ from the numbers shown in the current paper.
+
+### 10.1 Model Performance Details
+
+- The paper’s reported metrics focus on a 1-speaker setting (speaker ID 2, “scott”) to be consistent with earlier work.  
+- All released pretrained models (RVQ-VAEs, Diffusion, Shortcut, MeanFlow) are trained on a 1-speaker setup.  
+- To enable all-speaker usage, update the configuration files to include all speaker IDs.  
+- On **April 16, 2025**, the pretrained RVQ-VAEs and Shortcut models were updated to include all speakers.  
+- No additional hyperparameter tuning was done for the all-speaker case; it uses the same settings as the 1-speaker configuration.
+
+### 10.2 Design Choices
+
+- No speaker embedding is used so that the model can generalize to unseen speakers.  
+- Gesture type labels are not used in this version. This reflects realistic conditions where gesture types are typically unavailable for novel speakers and environments.  
+- If better FGD scores are your main priority, you may experiment with including gesture type information.
+
+### 10.3 Code Structure Notes
+
+- **Current version**: Clean, unified repository with MeanFlow fully supported.  
+- **Legacy code**: Available under the `old` branch for historical context.  
+- **ICCV 2025**: The work has been accepted to ICCV 2025 — thanks to all co-authors.
+
+---
+
+## 11. Demo Details
+
+The demo is built on top of the Shortcut model for fast, interactive gesture generation:
 
 ```bash
-# Train Diffusion Model
-python train.py --config configs_new/diffusion_rvqvae_128.yaml
-
-# Train Shortcut Model  
-python train.py --config configs_new/shortcut_rvqvae_128.yaml
-
-# Train MeanFlow Model
-python train.py --config configs_new/meanflow_rvqvae_128.yaml
-```
-
-### Training Configuration
-
-- **Config Directory**: Use `configs_new/` for the latest configurations
-- **Output Directory**: Models are saved to `./outputs/weights/`
-- **Logging**: Supports Weights & Biases integration (configure in config files)
-- **GPU Support**: Configure GPU usage in the config files
-
-### Legacy Training (Deprecated)
-> For reference only - use the unified pipeline above instead
-```bash
-# Old training commands (deprecated)
-python train.py -c configs/shortcut_rvqvae_128.yaml
-python train.py -c configs/diffuser_rvqvae_128.yaml
-```
-
-
-## Quick Start
-
-### Demo/Inference (No Dataset Required)
-```bash
-# Run the web demo with Shortcut model
 python demo.py -c configs/shortcut_rvqvae_128_hf.yaml
 ```
 
-### Testing with Your Own Data
-```bash
-# Test with your own audio and text (requires pretrained models)
-python train.py --config configs_new/shortcut_rvqvae_128.yaml --ckpt ckpt/shortcut_reflow.bin --mode test
-```
+**Features**
 
-## Demo
+- Web-based UI for user interaction  
+- Real-time or near real-time gesture synthesis  
+- Support for custom audio and textual input  
+- Visualization of the generated gesture sequences  
 
-The demo provides a web interface for gesture generation. It uses the Shortcut model by default for fast inference.
+---
 
-```bash
-python demo.py -c configs/shortcut_rvqvae_128_hf.yaml
-```
+## 12. Acknowledgments
 
-**Features**:
-- Web-based interface for easy interaction
-- Real-time gesture generation
-- Support for custom audio and text input
-- Visualization of generated gestures
+We gratefully acknowledge the following projects, from which this repository borrows ideas and code:
 
+- [SynTalker](https://github.com/RobinWitch/SynTalker/tree/main)  
+- [EMAGE](https://github.com/PantoMatrix/PantoMatrix/tree/main/scripts/EMAGE_2024)  
+- [DiffuseStyleGesture](https://github.com/YoungSeng/DiffuseStyleGesture)  
 
+Please consider exploring and citing these works as well.
 
-# 🙏 Acknowledgments
-Thanks to [SynTalker](https://github.com/RobinWitch/SynTalker/tree/main), [EMAGE](https://github.com/PantoMatrix/PantoMatrix/tree/main/scripts/EMAGE_2024), [DiffuseStyleGesture](https://github.com/YoungSeng/DiffuseStyleGesture), our code is partially borrowing from them. Please check these useful repos.
+---
 
+## 13. Citation
 
-# 📖 Citation
-
-If you find our code or paper helps, please consider citing:
+If this codebase or the GestureLSM paper is helpful to your work, please consider citing:
 
 ```bibtex
 @inproceedings{liu2025gesturelsmlatentshortcutbased,
@@ -335,4 +390,5 @@ If you find our code or paper helps, please consider citing:
   booktitle={IEEE/CVF International Conference on Computer Vision},
   year={2025},
 }
+```
 ```
