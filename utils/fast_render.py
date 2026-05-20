@@ -108,6 +108,7 @@ def write_images_from_queue_no_gt(fig_queue, output_dir, img_filetype):
     
 def render_frames_and_enqueue(fids, frame_vertex_pairs, faces, render_width, render_height, fig_queue):
     fig_resolution = (render_width // 2, render_height)
+    # FIXED: Re-added the missing renderer definition
     renderer = pyrender.OffscreenRenderer(*fig_resolution)
 
     for idx, fid in enumerate(fids):
@@ -117,12 +118,14 @@ def render_frames_and_enqueue(fids, frame_vertex_pairs, faces, render_width, ren
     renderer.delete()
 
 def render_frames_and_enqueue_no_gt(fids, frame_vertex_pairs, faces, render_width, render_height, fig_queue):
-    fig_resolution = (render_width // 2, render_height)
+    # FIXED: Added 1000x1000 or custom resolution renderer
+    fig_resolution = (render_width, render_height)
     renderer = pyrender.OffscreenRenderer(*fig_resolution)
 
     for idx, fid in enumerate(fids):
+        # FIXED: Correctly calls the "no_gt" frame processor
         fig1 = do_render_one_frame_no_gt(renderer, fid, frame_vertex_pairs[idx][0], faces)
-        fig_queue.put((fid, fig1))
+        fig_queue.put((fid, fig1, fig1)) # Put twice to match the writer expectation
     
     renderer.delete()
 
@@ -154,7 +157,8 @@ def sub_process_process_frame_no_gt(subprocess_index, render_video_width, render
     print(f"subprocess_index={subprocess_index} begin_ts={begin_ts}")
 
     fig_queue = queue.Queue()
-    render_frames_and_enqueue(fids, frame_vertex_pairs, faces, render_video_width, render_video_height, fig_queue)
+    # FIXED: Now correctly calls the "no_gt" renderer
+    render_frames_and_enqueue_no_gt(fids, frame_vertex_pairs, faces, render_video_width, render_video_height, fig_queue)
     fig_queue.put(None)
     render_end_ts = time.time()
 

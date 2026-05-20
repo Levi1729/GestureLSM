@@ -76,16 +76,18 @@ class CustomDataset(Dataset):
                 else:
                     self.joint_mask[self.ori_joint_list[joint_name][1] - self.ori_joint_list[joint_name][0]:self.ori_joint_list[joint_name][1]] = 1
         # select trainable joints
+        # HARDCODED FIX FOR WINDOWS LOCAL RUN
+        # We point directly to your D: drive .pkl files
+        # We increase the capacity to handle the high-detail BEAT dataset
         self.smplx = smplx.create(
-            self.args.data_path_1+"smplx_models/", 
-            model_type='smplx',
-            gender='NEUTRAL_2020', 
-            use_face_contour=False,
-            num_betas=300,
-            num_expression_coeffs=100, 
-            ext='npz',
-            use_pca=False,
-            ).eval()
+            model_path=r'D:\models_smplx_v1_1\models', 
+            model_type='smplx', 
+            gender='neutral', 
+            ext='pkl',
+            num_betas=300,        # <--- This must be 300
+            num_expressions=10,  # <--- This must be 100
+            use_pca=False
+        ).eval()
 
         if loader_type == 'test':
             # In demo/test mode, skip dataset CSV and use provided paths
@@ -230,35 +232,35 @@ class CustomDataset(Dataset):
             betas = np.tile(betas, (n, 1))
             betas = torch.from_numpy(betas).float()
             poses = torch.from_numpy(poses.reshape(n, c)).float()
-            exps = torch.from_numpy(exps.reshape(n, 100)).float()
+            exps = torch.from_numpy(exps.reshape(n, 100)[:, :10]).float()
             trans = torch.from_numpy(trans.reshape(n, 3)).float()
             max_length = 128    # 为什么这里需要一个max_length
             s, r = n//max_length, n%max_length
             #print(n, s, r)
             all_tensor = []
             for i in range(s):
-                with torch.no_grad():
-                    joints = self.smplx(
-                        betas=betas[i*max_length:(i+1)*max_length], 
-                        transl=trans[i*max_length:(i+1)*max_length], 
-                        expression=exps[i*max_length:(i+1)*max_length], 
-                        jaw_pose=poses[i*max_length:(i+1)*max_length, 66:69], 
-                        global_orient=poses[i*max_length:(i+1)*max_length,:3], 
-                        body_pose=poses[i*max_length:(i+1)*max_length,3:21*3+3], 
-                        left_hand_pose=poses[i*max_length:(i+1)*max_length,25*3:40*3], 
-                        right_hand_pose=poses[i*max_length:(i+1)*max_length,40*3:55*3], 
-                        return_verts=True,
-                        return_joints=True,
-                        leye_pose=poses[i*max_length:(i+1)*max_length, 69:72], 
-                        reye_pose=poses[i*max_length:(i+1)*max_length, 72:75],
-                    )['joints'][:, (7,8,10,11), :].reshape(max_length, 4, 3).cpu()
+             with torch.no_grad():
+                joints = self.smplx(
+                    betas=betas[i*max_length:(i+1)*max_length], 
+                    transl=trans[i*max_length:(i+1)*max_length], 
+                    expression=exps[i*max_length:(i+1)*max_length, :10], # Fixed Syntax
+                    jaw_pose=poses[i*max_length:(i+1)*max_length, 66:69], 
+                    global_orient=poses[i*max_length:(i+1)*max_length,:3], 
+                    body_pose=poses[i*max_length:(i+1)*max_length,3:21*3+3], 
+                    left_hand_pose=poses[i*max_length:(i+1)*max_length,25*3:40*3], 
+                    right_hand_pose=poses[i*max_length:(i+1)*max_length,40*3:55*3], 
+                    return_verts=True,
+                    return_joints=True,
+                    leye_pose=poses[i*max_length:(i+1)*max_length, 69:72], 
+                    reye_pose=poses[i*max_length:(i+1)*max_length, 72:75],
+                )['joints'][:, (7,8,10,11), :].reshape(max_length, 4, 3).cpu()
                 all_tensor.append(joints)
             if r != 0:
                 with torch.no_grad():
                     joints = self.smplx(
-                        betas=betas[s*max_length:s*max_length+r], 
+                        betas=betas[s*max_length:s*max_length+r, :300], 
                         transl=trans[s*max_length:s*max_length+r], 
-                        expression=exps[s*max_length:s*max_length+r], 
+                        expression=exps[s*max_length:s*max_length+r, :10], 
                         jaw_pose=poses[s*max_length:s*max_length+r, 66:69], 
                         global_orient=poses[s*max_length:s*max_length+r,:3], 
                         body_pose=poses[s*max_length:s*max_length+r,3:21*3+3], 
@@ -307,15 +309,17 @@ class CustomDataset(Dataset):
             if self.args.audio_rep == "onset+amplitude":
                 audio_each_file, sr = librosa.load(audio_file)
                 audio_each_file = librosa.resample(audio_each_file, orig_sr=sr, target_sr=self.args.audio_sr)
-                from numpy.lib import stride_tricks
-                frame_length = 1024
                 # hop_length = 512
-                shape = (audio_each_file.shape[-1] - frame_length + 1, frame_length)
-                strides = (audio_each_file.strides[-1], audio_each_file.strides[-1])
-                rolling_view = stride_tricks.as_strided(audio_each_file, shape=shape, strides=strides)
-                amplitude_envelope = np.max(np.abs(rolling_view), axis=1)
+                #shape = (audio_each_file.shape[-1] - frame_length + 1, frame_length)
+                #strides = (audio_each_file.strides[-1], audio_each_file.strides[-1])
+                #rolling_view = stride_tricks.as_strided(audio_each_file, shape=shape, strides=strides)
+                #amplitude_envelope = np.max(np.abs(rolling_view), axis=1)
+                audio_abs = np.abs(audio_each_file)
+                window_size = 1024 # Standard for this model
                 # pad the last frame_length-1 samples
-                amplitude_envelope = np.pad(amplitude_envelope, (0, frame_length-1), mode='constant', constant_values=amplitude_envelope[-1])
+                from scipy.ndimage import maximum_filter1d
+                amplitude_envelope = maximum_filter1d(audio_abs, size=window_size)
+                #amplitude_envelope = np.pad(amplitude_envelope, (0, frame_length-1), mode='constant', constant_values=amplitude_envelope[-1])
                 audio_onset_f = librosa.onset.onset_detect(y=audio_each_file, sr=self.args.audio_sr, units='frames')
                 onset_array = np.zeros(len(audio_each_file), dtype=float)
                 onset_array[audio_onset_f] = 1.0

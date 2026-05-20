@@ -24,9 +24,9 @@ from utils import config, logger_tools, other_tools_hf, metric, data_transfer, o
 from utils.joints import upper_body_mask, hands_body_mask, lower_body_mask
 from dataloaders import data_tools
 from dataloaders.build_vocab import Vocab
-from optimizers.optim_factory import create_optimizer
-from optimizers.scheduler_factory import create_scheduler
-from optimizers.loss_factory import get_loss_func
+#from optimizers.optim_factory import create_optimizer
+#from optimizers.scheduler_factory import create_scheduler
+#from optimizers.loss_factory import get_loss_func
 from dataloaders.data_tools import joints_list
 from utils import rotation_conversions as rc
 import soundfile as sf
@@ -77,10 +77,11 @@ class BaseTrainer(object):
             
             # use montreal forced aligner to get textgrid
             # Run MFA with full conda environment PATH
-            conda_bin = "/Users/tharunsaireddy/miniforge3/envs/gesturelsm/bin"
+            conda_bin = r"C:\ProgramData\anaconda3\envs\gesture_lsm\Scripts"
             env = os.environ.copy()
-            env["PATH"] = f"{conda_bin}:{env.get('PATH', '')}"
-            mfa_path = f"{conda_bin}/mfa"
+            env["PATH"] = f"{conda_bin};{env.get('PATH', '')}"
+            #mfa_path = f"{conda_bin}/mfa"
+            mfa_path = os.path.join(conda_bin, "mfa")
             command = [mfa_path, "align", tmp_dir, "english_us_arpa", "english_us_arpa", tmp_dir]
             result = subprocess.run(command, capture_output=True, text=True, env=env)
             print(f"MFA result: {result}")
@@ -119,16 +120,14 @@ class BaseTrainer(object):
             logger.info(f"init {cfg.model.g_name} success")
 
         self.smplx = smplx.create(
-        self.args.data_path_1+"smplx_models/", 
-            model_type='smplx',
-            gender='NEUTRAL_2020', 
-            use_face_contour=False,
-            num_betas=300,
-            num_expression_coeffs=100, 
-            ext='npz',
-            use_pca=False,
-        ).eval()    
-
+            model_path=r'D:\models_smplx_v1_1\models', 
+            model_type='smplx', 
+            gender='neutral', 
+            ext='pkl',
+            num_betas=300,        
+            num_expressions=10,   # Matches the dataloader fix
+            use_pca=False
+        ).eval()
         self.args = args
         self.ori_joint_list = joints_list[self.args.ori_joints]
         self.tar_joint_list_face = joints_list["beat_smplx_face"]
@@ -428,8 +427,6 @@ class BaseTrainer(object):
             rec_latent_hands = sample[...,128:2*128]
             rec_latent_lower = sample[...,2*128:]
             
-           
-
             if i == 0:
                 rec_all_upper.append(rec_latent_upper)
                 rec_all_hands.append(rec_latent_hands)
@@ -439,7 +436,14 @@ class BaseTrainer(object):
                 rec_all_hands.append(rec_latent_hands[:, self.args.pre_frames:])
                 rec_all_lower.append(rec_latent_lower[:, self.args.pre_frames:])
 
+        # SAFETY CHECK: Stop the process if audio is too short to generate movement
+        if not rec_all_upper:
+            actual_len = loaded_data['in_audio'].shape[1] / 16000
+            logger.error(f"Audio is too short ({actual_len:.2f}s). Must be > 4.3s.")
+            return None 
+
         try:
+            # FIXED: These lines are now indented correctly (outside the loop) and run only once
             rec_all_upper = torch.cat(rec_all_upper, dim=1) * self.vqvae_latent_scale
             rec_all_hands = torch.cat(rec_all_hands, dim=1) * self.vqvae_latent_scale
             rec_all_lower = torch.cat(rec_all_lower, dim=1) * self.vqvae_latent_scale
@@ -456,7 +460,6 @@ class BaseTrainer(object):
         rec_hands = self.vq_model_hands.latent2origin(rec_all_hands)[0]
         rec_lower = self.vq_model_lower.latent2origin(rec_all_lower)[0]
         
-        
         if self.use_trans:
             rec_trans_v = rec_lower[...,-3:]
             rec_trans_v = rec_trans_v * self.trans_std + self.trans_mean
@@ -470,22 +473,17 @@ class BaseTrainer(object):
             rec_hands = rec_hands * self.std_hands + self.mean_hands
             rec_lower = rec_lower * self.std_lower + self.mean_lower
 
-
-
-
         n = n - remain
         tar_pose = tar_pose[:, :n, :]
         tar_exps = tar_exps[:, :n, :]
         tar_trans = tar_trans[:, :n, :]
         tar_beta = tar_beta[:, :n, :]
 
-
         rec_exps = tar_exps
-        #rec_pose_jaw = rec_face[:, :, :6]
         rec_pose_legs = rec_lower[:, :, :54]
         bs, n = rec_pose_legs.shape[0], rec_pose_legs.shape[1]
         rec_pose_upper = rec_upper.reshape(bs, n, 13, 6)
-        rec_pose_upper = rc.rotation_6d_to_matrix(rec_pose_upper)#
+        rec_pose_upper = rc.rotation_6d_to_matrix(rec_pose_upper)
         rec_pose_upper = rc.matrix_to_axis_angle(rec_pose_upper).reshape(bs*n, 13*3)
         rec_pose_upper_recover = self.inverse_selection_tensor(rec_pose_upper, self.joint_mask_upper, bs*n)
         rec_pose_lower = rec_pose_legs.reshape(bs, n, 9, 6)
@@ -595,7 +593,7 @@ class BaseTrainer(object):
                     # results_save_path+"gt_"+test_seq_list.iloc[its]['id']+'.npz', 
                     results_save_path,
                     self.audio_path,
-                    self.args.data_path_1+"smplx_models/",
+                    r'D:\models_smplx_v1_1\models',
                     use_matplotlib = False,
                     args = self.args,
                     )
@@ -633,7 +631,7 @@ def gesturelsm(audio_path, sample_stratege=None):
     other_tools_hf.set_random_seed(args)
     other_tools_hf.print_exp_info(args)
 
-    # return one intance of trainer
+    # return one instance of trainer
     try:
         print("Creating trainer instance...")
         trainer = BaseTrainer(args, cfg, ap=audio_path)

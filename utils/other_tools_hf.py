@@ -700,16 +700,15 @@ def render_one_sequence_no_gt(
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = smplx.create(
-        model_folder,
-        model_type=model_type,
-        gender=gender,
-        use_face_contour=use_face_contour,
-        num_betas=num_betas,
-        num_expression_coeffs=num_expression_coeffs,
-        ext=ext,
-        use_pca=False,
+        model_path=r'D:\models_smplx_v1_1\models', 
+        model_type='smplx', 
+        gender='neutral', 
+        ext='pkl',           # Matches your D: drive assets
+        num_betas=300, 
+        num_expressions=10, 
+        use_pca=False, 
+        flat_hand_mean=True
     ).to(device)
-    
     #data_npz = np.load(f"{output_dir}{res_npz_path}.npz")
     data_np_body = np.load(res_npz_path, allow_pickle=True)
     # gt_np_body = np.load(gt_npz_path, allow_pickle=True)
@@ -717,17 +716,17 @@ def render_one_sequence_no_gt(
     if not os.path.exists(output_dir): os.makedirs(output_dir)
     # if not use_matplotlib:
     #    import trimesh 
-       #import pyrender
+    #import pyrender
     #'''
     #display = Display(visible=0, size=(1000, 1000))
     #display.start()
-    faces = np.load(f"{model_folder}/smplx/SMPLX_NEUTRAL_2020.npz", allow_pickle=True)["f"]
+    faces = np.load(r"D:\models_smplx_v1_1\models\smplx\smplx_npz\SMPLX_NEUTRAL.npz", allow_pickle=True)["f"]
     seconds = 1
     #data_npz["jaw_pose"].shape[0]
     n = data_np_body["poses"].shape[0]
     beta = torch.from_numpy(data_np_body["betas"]).to(torch.float32).unsqueeze(0).to(device)
     beta = beta.repeat(n, 1)
-    expression = torch.from_numpy(data_np_body["expressions"][:n]).to(torch.float32).to(device)
+    expression = torch.from_numpy(data_np_body["expressions"][:n, :10]).to(torch.float32).to(device)
     jaw_pose = torch.from_numpy(data_np_body["poses"][:n, 66:69]).to(torch.float32).to(device)
     pose = torch.from_numpy(data_np_body["poses"][:n]).to(torch.float32).to(device)
     transl = torch.from_numpy(data_np_body["trans"][:n]).to(torch.float32).to(device)

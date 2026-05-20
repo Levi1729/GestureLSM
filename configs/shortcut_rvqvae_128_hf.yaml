@@ -1,4 +1,4 @@
-is_train: True
+is_train: False #chnages from true to fall
 ddp: False
 stat: ts
 root_path: ./
@@ -94,3 +94,6 @@ rec_weight: 1
 grad_norm: 0.99
 epochs: 1000
 test_period: 20
+render_concurrent_num: 1
+render_video_width: 640
+render_video_height: 480
